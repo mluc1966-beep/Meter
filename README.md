@@ -1,21 +1,25 @@
-# Processo all'AI — voto live + Word Cloud (v2)
+# Processo all'AI — voto live + Word Cloud (v3)
 
-Web-app per GitHub Pages + Firebase Firestore. Un unico link/QR per i partecipanti: la pagina resta aperta e segue automaticamente la domanda impostata dalla Regia.
+Web-app per GitHub Pages + Firebase Firestore.
 
-## Funzioni
-- scelta/voto con risultati live;
-- Word Cloud con una parola/breve espressione per partecipante e tornata;
-- apertura/chiusura dalla Regia;
-- stesso QR per tutto l'evento;
-- nessun account richiesto al partecipante;
-- identificativo anonimo locale nel browser.
+## Novità v3
+- Risposte partecipante impilate verticalmente, larghe e ben distanziate.
+- Nuova pagina `display.html` dedicata a maxischermo/proiettore.
+- Responso con percentuali grandi, numero voti, barre animate ed evidenza del risultato più votato.
+- Dalla Regia: pulsante **Apri Schermo** e checkbox **Rivela il responso sullo schermo**.
+- Il link partecipante e il link schermo mantengono lo stesso codice sessione.
 
-## Configurazione
-1. Crea un progetto Firebase separato dall'app Orto.
-2. Attiva Firestore Database.
-3. Registra una Web App e copia i parametri in `firebase-config.js`.
-4. Pubblica questi file in un repository GitHub con GitHub Pages.
-5. Apri `admin.html`; il link partecipanti mostrato in fondo è quello da trasformare in QR.
+## Pagine
+- `index.html`: partecipanti
+- `admin.html`: regia
+- `display.html`: schermo/proiettore
 
-## Importante prima dell'evento
-Le regole Firestore incluse nella v1 erano volutamente demo (`allow write: if true`). Prima dell'uso reale va protetta la Regia e vanno applicate regole/API più robuste per impedire manipolazioni. La protezione anti-doppio invio attuale è adeguata per una prova, non è una garanzia antifrode.
+## Uso rapido
+1. Apri Regia.
+2. Configura domanda e opzioni.
+3. Premi **Apri**.
+4. Apri **Schermo** sul PC collegato al proiettore.
+5. Durante la votazione lo schermo mostra “Votazione in corso”.
+6. Quando vuoi rivelare il risultato, attiva **Rivela il responso sullo schermo**.
+
+La configurazione Firebase del progetto METER è già inclusa in `firebase-config.js`.

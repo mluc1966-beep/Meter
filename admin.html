@@ -1,12 +1,56 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Regia - Processo all'AI</title><link rel="stylesheet" href="style.css"></head><body><main class="app wide">
-<section class="card"><div class="eyebrow">REGIA</div><h1>Processo all'Intelligenza Artificiale</h1>
-<div class="grid2"><label>Tipo di interazione<select id="typeInput"><option value="choice">Scelta / voto</option><option value="wordcloud">Word Cloud</option></select></label><label>Codice sessione<input id="sessionInput" value="processo-ai-2026"></label></div>
-<label>Domanda<input id="questionInput" value="Qual è il vostro verdetto?"></label>
-<label id="optionsWrap">Opzioni (una per riga)<textarea id="optionsInput" rows="5">COLPEVOLE
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Regia - Processo all'AI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app wide">
+  <section class="card">
+    <div class="eyebrow">REGIA</div>
+    <h1 class="admin-title">Processo all'Intelligenza Artificiale</h1>
+    <div class="grid2">
+      <label>Tipo di interazione
+        <select id="typeInput">
+          <option value="choice">Scelta / voto</option>
+          <option value="wordcloud">Word Cloud</option>
+        </select>
+      </label>
+      <label>Codice sessione
+        <input id="sessionInput" value="processo-ai-2026">
+      </label>
+    </div>
+    <label>Domanda<input id="questionInput" value="Qual è il vostro verdetto?"></label>
+    <label id="optionsWrap">Opzioni (una per riga)<textarea id="optionsInput" rows="5">COLPEVOLE
 NON COLPEVOLE
 NON HO ANCORA DECISO</textarea></label>
-<div class="actions"><button id="saveBtn">Salva</button><button id="openBtn">Apri</button><button id="closeBtn" class="secondary">Chiudi</button><button id="resetBtn" class="danger">Azzera risposte</button></div>
-<label class="toggle"><input type="checkbox" id="showResults"> Mostra risultati ai partecipanti</label></section>
-<section class="card"><h2>Risultati live</h2><p><strong id="totalVotes">0</strong> risposte ricevute</p><div id="results"></div></section>
-<section class="card"><h2>Link unico partecipanti</h2><p class="muted">È sempre lo stesso: il partecipante inquadra il QR una volta e la pagina segue automaticamente ciò che apri dalla Regia.</p><code id="participantUrl"></code></section>
-</main><script type="module" src="admin.js"></script></body></html>
+    <div class="actions">
+      <button id="saveBtn">Salva</button>
+      <button id="openBtn">Apri</button>
+      <button id="closeBtn" class="secondary">Chiudi</button>
+      <button id="resetBtn" class="danger">Azzera risposte</button>
+    </div>
+    <label class="toggle reveal-toggle"><input type="checkbox" id="showResults"> Rivela il responso sullo schermo</label>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <div><h2>Risultati live</h2><p class="muted compact"><strong id="totalVotes">0</strong> risposte ricevute</p></div>
+      <a id="screenLink" class="link-button" href="display.html" target="_blank" rel="noopener">Apri Schermo</a>
+    </div>
+    <div id="results"></div>
+  </section>
+
+  <section class="card">
+    <h2>Link unico partecipanti</h2>
+    <p class="muted">È sempre lo stesso: il partecipante lo apre una volta e la pagina segue automaticamente ciò che apri dalla Regia.</p>
+    <code id="participantUrl"></code>
+    <h2 class="spaced-title">Link schermo / proiettore</h2>
+    <code id="displayUrl"></code>
+  </section>
+</main>
+<script type="module" src="admin.js"></script>
+</body>
+</html>

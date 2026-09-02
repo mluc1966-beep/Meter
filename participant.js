@@ -1,9 +1,103 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
 import { getFirestore, doc, onSnapshot, runTransaction, serverTimestamp, collection, setDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
-const db=getFirestore(initializeApp(firebaseConfig)),sessionId=new URLSearchParams(location.search).get('s')||'processo-ai-2026',ref=doc(db,'sessions',sessionId),box=document.getElementById('interaction'),question=document.getElementById('question'),status=document.getElementById('status'),thanks=document.getElementById('thanks');
-const key=r=>`answered:${sessionId}:${r}`;onSnapshot(ref,s=>{if(!s.exists()){question.textContent='Sessione non configurata';status.textContent='Controlla il link.';box.innerHTML='';return}render(s.data())});
-function render(d){question.textContent=d.question||'Interazione';box.innerHTML='';thanks.classList.add('hidden');if(!d.isOpen){status.textContent='In attesa della prossima domanda…';return}if(localStorage.getItem(key(d.roundId))){status.textContent='Hai già risposto.';thanks.classList.remove('hidden');return}if(d.type==='wordcloud'){status.textContent='Scrivi una parola o una breve espressione.';box.innerHTML='<div class="word-entry"><input id="wordInput" maxlength="40" placeholder="La tua parola…"><button id="sendWord">Invia</button></div>';document.getElementById('sendWord').onclick=()=>sendWord(d.roundId);return}status.textContent='Seleziona una risposta.';(d.options||[]).forEach((o,i)=>{const b=document.createElement('button');b.className='choice';b.textContent=o;b.onclick=()=>vote(i,d.roundId);box.appendChild(b)})}
-async function vote(i,r){box.querySelectorAll('button').forEach(b=>b.disabled=true);try{await runTransaction(db,async tx=>{const s=await tx.get(ref);if(!s.exists())throw Error('Sessione non trovata');const d=s.data();if(!d.isOpen||d.roundId!==r)throw Error('Votazione chiusa');const c=[...(d.counts||[])];c[i]=(c[i]||0)+1;tx.update(ref,{counts:c,updatedAt:serverTimestamp()})});done(r)}catch(e){status.textContent=e.message}}
-async function sendWord(r){const input=document.getElementById('wordInput'),text=input.value.trim().replace(/\s+/g,' ');if(!text)return;document.getElementById('sendWord').disabled=true;try{const voter=getVoter();await setDoc(doc(collection(db,'responses'),`${sessionId}_${r}_${voter}`),{sessionId,roundId:r,text,createdAt:serverTimestamp()});done(r)}catch(e){status.textContent='Errore durante l’invio.'}}
-function getVoter(){let v=localStorage.getItem('processo-ai-voter');if(!v){v=crypto.randomUUID();localStorage.setItem('processo-ai-voter',v)}return v}function done(r){localStorage.setItem(key(r),'1');box.innerHTML='';status.textContent='Risposta registrata.';thanks.classList.remove('hidden')}
+
+const db = getFirestore(initializeApp(firebaseConfig));
+const sessionId = new URLSearchParams(location.search).get('s') || 'processo-ai-2026';
+const ref = doc(db,'sessions',sessionId);
+const box = document.getElementById('interaction');
+const question = document.getElementById('question');
+const status = document.getElementById('status');
+const thanks = document.getElementById('thanks');
+const key = r => `answered:${sessionId}:${r}`;
+
+onSnapshot(ref, s => {
+  if (!s.exists()) {
+    question.textContent = 'Sessione non configurata';
+    status.textContent = 'Controlla il link.';
+    box.innerHTML = '';
+    return;
+  }
+  render(s.data());
+});
+
+function render(d) {
+  question.textContent = d.question || 'Interazione';
+  box.innerHTML = '';
+  box.className = 'interaction';
+  thanks.classList.add('hidden');
+
+  if (!d.isOpen) {
+    status.textContent = 'In attesa della prossima domanda…';
+    return;
+  }
+  if (localStorage.getItem(key(d.roundId))) {
+    status.textContent = 'Hai già risposto.';
+    thanks.classList.remove('hidden');
+    return;
+  }
+  if (d.type === 'wordcloud') {
+    status.textContent = 'Scrivi una parola o una breve espressione.';
+    box.innerHTML = '<div class="word-entry"><input id="wordInput" maxlength="40" placeholder="La tua parola…"><button id="sendWord">Invia</button></div>';
+    document.getElementById('sendWord').onclick = () => sendWord(d.roundId);
+    return;
+  }
+
+  status.textContent = 'Seleziona una risposta.';
+  box.classList.add('choice-list');
+  (d.options || []).forEach((o,i) => {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.textContent = o;
+    b.onclick = () => vote(i,d.roundId);
+    box.appendChild(b);
+  });
+}
+
+async function vote(i,r) {
+  box.querySelectorAll('button').forEach(b => b.disabled = true);
+  try {
+    await runTransaction(db, async tx => {
+      const s = await tx.get(ref);
+      if (!s.exists()) throw Error('Sessione non trovata');
+      const d = s.data();
+      if (!d.isOpen || d.roundId !== r) throw Error('Votazione chiusa');
+      const c = [...(d.counts || [])];
+      c[i] = (c[i] || 0) + 1;
+      tx.update(ref,{counts:c,updatedAt:serverTimestamp()});
+    });
+    done(r);
+  } catch(e) {
+    status.textContent = e.message;
+  }
+}
+
+async function sendWord(r) {
+  const input = document.getElementById('wordInput');
+  const text = input.value.trim().replace(/\s+/g,' ');
+  if (!text) return;
+  document.getElementById('sendWord').disabled = true;
+  try {
+    const voter = getVoter();
+    await setDoc(doc(collection(db,'responses'),`${sessionId}_${r}_${voter}`),{sessionId,roundId:r,text,createdAt:serverTimestamp()});
+    done(r);
+  } catch(e) {
+    status.textContent = 'Errore durante l’invio.';
+  }
+}
+
+function getVoter() {
+  let v = localStorage.getItem('processo-ai-voter');
+  if (!v) {
+    v = crypto.randomUUID();
+    localStorage.setItem('processo-ai-voter',v);
+  }
+  return v;
+}
+
+function done(r) {
+  localStorage.setItem(key(r),'1');
+  box.innerHTML = '';
+  status.textContent = 'Risposta registrata.';
+  thanks.classList.remove('hidden');
+}
