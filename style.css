@@ -326,3 +326,9 @@ body:has(.participant-app) .participant-app .interaction.choice-list{
 .agenda-open{background:#18202a}.agenda-small{white-space:nowrap}.agenda-order{display:flex;gap:4px}.agenda-icon{width:36px;padding:8px 0!important;font-size:1rem!important}.agenda-icon:disabled{opacity:.28;cursor:default}
 .agenda-editbar{margin:16px 0 4px;padding:11px 13px;border-radius:13px;background:#edf4fb;border:1px solid #d7e5f3;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.88rem;font-weight:700;color:#365b7d}.agenda-editbar>div{display:flex;gap:7px}.agenda-editbar button{font-size:.78rem;padding:8px 10px;border-radius:9px}
 @media(max-width:760px){.agenda-head{align-items:stretch}.agenda-primary{width:100%}.agenda-item{grid-template-columns:40px minmax(0,1fr)}.agenda-actions{grid-column:1/-1;justify-content:flex-end;flex-wrap:wrap}.agenda-order{margin-left:auto}.agenda-editbar{align-items:flex-start;flex-direction:column}.agenda-editbar>div{width:100%;flex-wrap:wrap}}
+
+
+/* v6.1 - stato della scaletta */
+.agenda-status{margin:12px 0 4px;padding:10px 12px;border-radius:10px;background:#eef7f2;font-weight:700;color:#285b43}
+.agenda-status.error{background:#fff0f0;color:#9b2634}
+.agenda-status.hidden{display:none}

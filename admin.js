@@ -45,7 +45,6 @@ function subscribe() {
     if (d.type === 'wordcloud') subscribeWords(d.roundId);
     else {
       if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
-  if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
       render(d,[]);
     }
   });
@@ -60,6 +59,10 @@ function subscribe() {
     agendaItems = snap.docs.map(x => ({id:x.id,...x.data()}));
     agendaItems.sort((a,b) => (Number(a.order)||0) - (Number(b.order)||0) || timeMs(a.createdAt)-timeMs(b.createdAt));
     renderAgenda();
+    setAgendaStatus('');
+  }, err => {
+    console.error('Errore scaletta Firestore:', err);
+    setAgendaStatus('Errore Firebase: ' + (err?.message || 'impossibile leggere la scaletta'), true);
   });
 
   updateUrls();
@@ -186,6 +189,15 @@ q('resetBtn').onclick = async () => {
 };
 
 
+
+function setAgendaStatus(message, isError=false) {
+  const el = q('agendaStatus');
+  if (!el) return;
+  el.textContent = message || '';
+  el.classList.toggle('error', !!isError);
+  el.classList.toggle('hidden', !message);
+}
+
 function currentInteractionPayload() {
   const type = q('typeInput').value;
   return {
@@ -204,14 +216,28 @@ function validateInteraction(data) {
 q('agendaAddBtn').onclick = async () => {
   const data = currentInteractionPayload();
   if (!validateInteraction(data)) return;
-  const id = crypto.randomUUID();
-  const maxOrder = agendaItems.reduce((m,x)=>Math.max(m,Number(x.order)||0),0);
-  await setDoc(agendaItemRef(id),{
-    ...data,
-    order:maxOrder + 10,
-    createdAt:serverTimestamp(),
-    updatedAt:serverTimestamp()
-  });
+  const btn = q('agendaAddBtn');
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Salvataggio…';
+  setAgendaStatus('Salvataggio nella scaletta…');
+  try {
+    const id = crypto.randomUUID();
+    const maxOrder = agendaItems.reduce((m,x)=>Math.max(m,Number(x.order)||0),0);
+    await setDoc(agendaItemRef(id),{
+      ...data,
+      order:maxOrder + 10,
+      createdAt:serverTimestamp(),
+      updatedAt:serverTimestamp()
+    });
+    setAgendaStatus('Interazione aggiunta alla scaletta.');
+  } catch (err) {
+    console.error('Errore aggiunta scaletta:', err);
+    setAgendaStatus('Errore Firebase: ' + (err?.message || 'interazione non salvata'), true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
 };
 
 q('agendaUpdateBtn').onclick = async () => {
@@ -313,7 +339,6 @@ async function getRoundWords(roundId) {
 function subscribeWords(roundId) {
   if (!roundId) {
     if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
-  if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
     render({type:'wordcloud'},[]);
     return;
   }
