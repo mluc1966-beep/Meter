@@ -118,11 +118,11 @@ code{display:block;word-break:break-all;padding:14px;background:#f3f4f6;border-r
 /* Grafica congresso */
 body{background:#fff;background-attachment:fixed}
 .participant-app .hero{position:relative;overflow:hidden;background:rgba(255,255,255,.94);border:1px solid rgba(62,130,170,.12)}
-.participant-app .hero::before{content:"";display:block;width:100%;height:clamp(120px,23vw,185px);background:url('header-processo-ai.png') center/cover no-repeat;border-radius:18px;margin-bottom:24px}
+.participant-app .hero::before{content:"";display:block;width:100%;height:auto;aspect-ratio:1223/547;background:url('header-processo-ai.png') center/contain no-repeat;border-radius:18px;margin-bottom:24px;flex:0 0 auto}
 .participant-app .eyebrow{display:none}
 .participant-app .choice:nth-child(1){background:linear-gradient(135deg,#1597a8,#247f9b)}
 .participant-app .choice:nth-child(2){background:linear-gradient(135deg,#356fba,#28589c)}
 .participant-app .choice:nth-child(3){background:linear-gradient(135deg,#7860ba,#60499f)}
 .participant-app .choice:nth-child(4){background:linear-gradient(135deg,#557391,#3f5d7b)}
 .participant-app .choice{box-shadow:0 8px 20px rgba(30,72,105,.18)}
-@media(max-width:650px){.participant-app .hero::before{height:118px;margin:-8px -4px 20px;width:calc(100% + 8px)}}
+@media(max-width:650px){.participant-app .hero::before{width:100%;height:auto;aspect-ratio:1223/547;margin:0 0 20px;background-size:contain}}
