@@ -395,7 +395,13 @@ body.display-body{
   width:100%;
   height:clamp(78px,15dvh,150px);
   flex:0 0 auto;
-  background:#fff url('header-processo-ai.png') center/contain no-repeat;
+  /* Banner orizzontale: conserva il logo originale a sinistra e prolunga
+     il suo fondo blu per tutta la larghezza dello schermo. */
+  background-color:#011a2b;
+  background-image:url('header-processo-ai.png');
+  background-repeat:no-repeat;
+  background-position:left center;
+  background-size:auto 100%;
   border-radius:16px;
   margin:0 auto clamp(5px,.8dvh,10px);
 }
