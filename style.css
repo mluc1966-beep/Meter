@@ -482,3 +482,30 @@ body.display-body{
 .holding .display-question{
   font-size:clamp(2.2rem,4.4vw,5.3rem);
 }
+
+
+/* === Word Cloud centrata v7.1 === */
+.cloud-mode .display-results{position:relative;display:block;width:min(1600px,97%);}
+.cloud-mode .display-cloud{
+  position:relative;
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-width:none;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+}
+.cloud-mode .display-cloud-word{
+  display:block;
+  white-space:nowrap;
+  padding:0;
+  margin:0;
+  line-height:.92;
+  letter-spacing:-.035em;
+  font-weight:850;
+  transform-origin:center;
+  animation:cloudIn .32s ease both;
+}
+.cloud-mode .display-cloud-word.rank-0{font-weight:950;z-index:10;}
