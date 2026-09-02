@@ -292,3 +292,21 @@ body:has(.participant-app) .participant-app .interaction.choice-list{
   .history-summary{white-space:normal}
   .history-item summary>span:first-child{width:100%}
 }
+
+
+/* Word Cloud v5 */
+.wordcloud-help{display:none;margin:.15rem 0 1rem}
+.word-entry{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:10px!important;align-items:center;margin-top:clamp(8px,1.8dvh,18px)!important}
+.word-entry input{min-width:0;font-size:clamp(1rem,2.3dvh,1.2rem)!important;padding:clamp(10px,1.7dvh,15px)!important;border-radius:14px}
+.word-entry button{min-height:48px;border-radius:14px;padding:10px 22px}
+.word-entry .word-hint{grid-column:1/-1;text-align:center;color:var(--muted);font-size:.82rem}
+.cloud{min-height:220px;align-content:center}
+.cloud-word{display:inline-flex;align-items:flex-start;gap:3px;font-size:calc(17px + (36px * var(--weight)));font-weight:800;line-height:1.05;padding:5px 8px;border-radius:12px;transition:font-size .35s ease,transform .35s ease;background:rgba(238,242,246,.56)}
+.cloud-word:nth-child(4n+1){color:#087b87}.cloud-word:nth-child(4n+2){color:#356db2}.cloud-word:nth-child(4n+3){color:#6d5aa5}.cloud-word:nth-child(4n){color:#4e6687}
+.cloud-word.rank-0{font-weight:950}.cloud-word sup{font-size:.42em;margin-top:-.15em;opacity:.65}
+.display-cloud{min-height:48vh;max-width:1500px;margin:0 auto;align-content:center;padding:2.5vh 3vw;gap:1.4vh 1.6vw}
+.display-cloud-word{font-size:calc(clamp(1.25rem,2.2vw,2.5rem) + (clamp(2rem,4.7vw,6.4rem) * var(--weight)));font-weight:850;line-height:.95;letter-spacing:-.025em;padding:.08em .13em;transition:font-size .45s ease,transform .45s ease,opacity .3s ease;animation:cloudIn .35s ease both}
+.display-cloud-word:nth-child(4n+1){color:#087b87}.display-cloud-word:nth-child(4n+2){color:#356db2}.display-cloud-word:nth-child(4n+3){color:#6d5aa5}.display-cloud-word:nth-child(4n){color:#4e6687}
+.display-cloud-word.rank-0{font-weight:950}.cloud-empty{text-align:center;color:var(--muted);font-size:clamp(1.2rem,2.4vw,2.2rem);padding:12vh 2vw}
+@keyframes cloudIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+@media (max-width:600px){.word-entry{grid-template-columns:1fr!important}.word-entry button{width:100%}.participant-app .word-entry{margin-top:4px!important}.participant-app .word-entry input{padding:9px 11px!important}.participant-app .word-entry button{min-height:42px;padding:8px 16px}.participant-app .word-entry .word-hint{font-size:.68rem}}

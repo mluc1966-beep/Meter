@@ -7,13 +7,18 @@ const q = id => document.getElementById(id);
 let currentSession = q('sessionInput').value.trim();
 let unsub = null;
 let unsubHistory = null;
+let unsubWords = null;
+let activeCloudRound = null;
 const sessionRef = () => doc(db,'sessions',currentSession);
 const roundRef = roundId => doc(db,'sessions',currentSession,'rounds',roundId);
 const roundsRef = () => collection(db,'sessions',currentSession,'rounds');
 const options = () => q('optionsInput').value.split('\n').map(x=>x.trim()).filter(Boolean);
 
 function typeUI() {
-  q('optionsWrap').style.display = q('typeInput').value === 'choice' ? 'block' : 'none';
+  const isChoice = q('typeInput').value === 'choice';
+  q('optionsWrap').style.display = isChoice ? 'block' : 'none';
+  const help = q('wordCloudHelp');
+  if (help) help.style.display = isChoice ? 'none' : 'block';
 }
 q('typeInput').onchange = typeUI;
 typeUI();
@@ -21,6 +26,7 @@ typeUI();
 function subscribe() {
   if (unsub) unsub();
   if (unsubHistory) unsubHistory();
+  if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
 
   unsub = onSnapshot(sessionRef(), async snap => {
     if (!snap.exists()) return render(null,[]);
@@ -30,8 +36,11 @@ function subscribe() {
     typeUI();
     if (d.options?.length) q('optionsInput').value = d.options.join('\n');
     q('showResults').checked = !!d.showResults;
-    if (d.type === 'wordcloud') await loadWords(d.roundId);
-    else render(d,[]);
+    if (d.type === 'wordcloud') subscribeWords(d.roundId);
+    else {
+      if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
+      render(d,[]);
+    }
   });
 
   unsubHistory = onSnapshot(roundsRef(), snap => {
@@ -169,9 +178,20 @@ async function getRoundWords(roundId) {
   return snap.docs.map(x=>x.data().text||'').filter(Boolean);
 }
 
-async function loadWords(roundId) {
-  const words = await getRoundWords(roundId);
-  render({type:'wordcloud'},words);
+function subscribeWords(roundId) {
+  if (!roundId) {
+    if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
+    render({type:'wordcloud'},[]);
+    return;
+  }
+  if (activeCloudRound === roundId && unsubWords) return;
+  if (unsubWords) unsubWords();
+  activeCloudRound = roundId;
+  const qq = query(collection(db,'responses'),where('sessionId','==',currentSession),where('roundId','==',roundId));
+  unsubWords = onSnapshot(qq, snap => {
+    const words = snap.docs.map(x=>x.data().text||'').filter(Boolean);
+    render({type:'wordcloud'},words);
+  });
 }
 
 function wordFrequencies(words) {
@@ -188,7 +208,10 @@ function render(d,words) {
     const freq = wordFrequencies(words);
     const arr = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
     q('totalVotes').textContent = words.length;
-    q('results').innerHTML = `<div class="cloud">${arr.map(([w,n])=>`<span style="font-size:${Math.min(52,18+n*7)}px" title="${n}">${esc(w)}</span>`).join('')}</div>`;
+    const maxCount = Math.max(1,...arr.map(([,n])=>n));
+    q('results').innerHTML = arr.length
+      ? `<div class="cloud">${arr.map(([w,n],i)=>`<span class="cloud-word rank-${Math.min(i,5)}" style="--weight:${(n/maxCount).toFixed(3)}" title="${n} ${n===1?'risposta':'risposte'}">${esc(w)}${n>1?`<sup>${n}</sup>`:''}</span>`).join('')}</div>`
+      : '<p class="muted">In attesa delle prime parole…</p>';
     return;
   }
 

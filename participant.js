@@ -38,8 +38,9 @@ function render(d) {
   }
   if (d.type === 'wordcloud') {
     status.textContent = 'Scrivi una parola o una breve espressione.';
-    box.innerHTML = '<div class="word-entry"><input id="wordInput" maxlength="40" placeholder="La tua parola…"><button id="sendWord">Invia</button></div>';
+    box.innerHTML = '<div class="word-entry"><input id="wordInput" maxlength="40" autocomplete="off" autocapitalize="sentences" placeholder="Scrivi qui…"><button id="sendWord">Invia</button><div class="word-hint">Massimo 40 caratteri · una risposta per partecipante</div></div>';
     document.getElementById('sendWord').onclick = () => sendWord(d.roundId);
+    document.getElementById('wordInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendWord(d.roundId); });
     return;
   }
 

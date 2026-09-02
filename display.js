@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+import { getFirestore, doc, onSnapshot, collection, query, where } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
 const db = getFirestore(initializeApp(firebaseConfig));
@@ -9,6 +9,8 @@ const question = document.getElementById('displayQuestion');
 const message = document.getElementById('displayMessage');
 const results = document.getElementById('displayResults');
 let lastRound = null;
+let unsubCloud = null;
+let cloudRound = null;
 
 onSnapshot(ref, async snap => {
   if (!snap.exists()) {
@@ -23,12 +25,15 @@ onSnapshot(ref, async snap => {
 
   if (d.type === 'wordcloud') {
     if (!d.showResults) {
+      stopCloud();
       showHolding(d);
       return;
     }
-    await renderCloud(d.roundId);
+    subscribeCloud(d.roundId);
     return;
   }
+
+  stopCloud();
 
   if (!d.showResults) {
     showHolding(d);
@@ -71,18 +76,36 @@ function renderChoice(d) {
   }));
 }
 
-async function renderCloud(roundId) {
-  if (!roundId || roundId !== lastRound) return;
-  const snap = await getDocs(query(collection(db,'responses'),where('sessionId','==',sessionId),where('roundId','==',roundId)));
-  const freq = {};
-  snap.docs.forEach(x => {
-    const text = (x.data().text || '').trim().toLocaleLowerCase('it');
-    if (text) freq[text] = (freq[text] || 0) + 1;
+function stopCloud() {
+  if (unsubCloud) unsubCloud();
+  unsubCloud = null;
+  cloudRound = null;
+}
+
+function subscribeCloud(roundId) {
+  if (!roundId) return;
+  if (cloudRound === roundId && unsubCloud) return;
+  stopCloud();
+  cloudRound = roundId;
+  const qq = query(collection(db,'responses'),where('sessionId','==',sessionId),where('roundId','==',roundId));
+  unsubCloud = onSnapshot(qq, snap => {
+    if (roundId !== lastRound) return;
+    const freq = {};
+    snap.docs.forEach(x => {
+      const raw = (x.data().text || '').trim().replace(/\s+/g,' ');
+      const key = raw.toLocaleLowerCase('it');
+      if (!key) return;
+      if (!freq[key]) freq[key] = {label:raw,count:0};
+      freq[key].count++;
+    });
+    const arr = Object.values(freq).sort((a,b)=>b.count-a.count || a.label.localeCompare(b.label,'it'));
+    const total = snap.size;
+    const maxCount = Math.max(1,...arr.map(x=>x.count));
+    message.innerHTML = `<strong class="voter-total">${total}</strong> ${total===1?'contributo':'contributi'}`;
+    results.innerHTML = arr.length
+      ? `<div class="display-cloud">${arr.map((x,i)=>`<span class="display-cloud-word rank-${Math.min(i,7)}" style="--weight:${(x.count/maxCount).toFixed(3)}" title="${x.count}">${esc(x.label)}</span>`).join('')}</div>`
+      : '<div class="cloud-empty">In attesa delle prime parole…</div>';
   });
-  const arr = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
-  const total = arr.reduce((sum,[,n])=>sum+n,0);
-  message.innerHTML = `<strong class="voter-total">${total}</strong> contributi`;
-  results.innerHTML = `<div class="display-cloud">${arr.map(([w,n])=>`<span style="font-size:${Math.min(7,2.1+n*.65)}rem">${esc(w)}</span>`).join('')}</div>`;
 }
 
 function esc(s) {
