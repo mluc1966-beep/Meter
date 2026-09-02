@@ -310,3 +310,19 @@ body:has(.participant-app) .participant-app .interaction.choice-list{
 .display-cloud-word.rank-0{font-weight:950}.cloud-empty{text-align:center;color:var(--muted);font-size:clamp(1.2rem,2.4vw,2.2rem);padding:12vh 2vw}
 @keyframes cloudIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
 @media (max-width:600px){.word-entry{grid-template-columns:1fr!important}.word-entry button{width:100%}.participant-app .word-entry{margin-top:4px!important}.participant-app .word-entry input{padding:9px 11px!important}.participant-app .word-entry button{min-height:42px;padding:8px 16px}.participant-app .word-entry .word-hint{font-size:.68rem}}
+
+/* === Scaletta evento Regia v6 === */
+.agenda-head{align-items:center}
+.agenda-primary{white-space:nowrap;background:linear-gradient(135deg,#356fba,#28589c)}
+.agenda-list{display:grid;gap:12px;margin-top:20px}
+.agenda-empty{padding:18px;border:1px dashed #cfd6de;border-radius:14px;background:#fafbfc}
+.agenda-item{display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px;border:1px solid #e0e5ea;border-radius:17px;background:#fafbfc;transition:border-color .15s,box-shadow .15s}
+.agenda-item.selected{border-color:#356fba;box-shadow:0 0 0 3px rgba(53,111,186,.10)}
+.agenda-num{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#e8eef6;color:#345b86;font-weight:900}
+.agenda-main{min-width:0}.agenda-main>strong{display:block;font-size:1.02rem;line-height:1.25}
+.agenda-type{font-size:.68rem;letter-spacing:.08em;font-weight:900;color:#667085;margin-bottom:5px}
+.agenda-options{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.agenda-options span{font-size:.74rem;background:#eef2f6;border-radius:999px;padding:4px 7px;color:#536171}
+.agenda-actions{display:flex;align-items:center;gap:7px}.agenda-actions button{padding:9px 12px;border-radius:11px;font-size:.82rem}
+.agenda-open{background:#18202a}.agenda-small{white-space:nowrap}.agenda-order{display:flex;gap:4px}.agenda-icon{width:36px;padding:8px 0!important;font-size:1rem!important}.agenda-icon:disabled{opacity:.28;cursor:default}
+.agenda-editbar{margin:16px 0 4px;padding:11px 13px;border-radius:13px;background:#edf4fb;border:1px solid #d7e5f3;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.88rem;font-weight:700;color:#365b7d}.agenda-editbar>div{display:flex;gap:7px}.agenda-editbar button{font-size:.78rem;padding:8px 10px;border-radius:9px}
+@media(max-width:760px){.agenda-head{align-items:stretch}.agenda-primary{width:100%}.agenda-item{grid-template-columns:40px minmax(0,1fr)}.agenda-actions{grid-column:1/-1;justify-content:flex-end;flex-wrap:wrap}.agenda-order{margin-left:auto}.agenda-editbar{align-items:flex-start;flex-direction:column}.agenda-editbar>div{width:100%;flex-wrap:wrap}}

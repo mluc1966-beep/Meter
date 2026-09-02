@@ -37,6 +37,24 @@ NON HO ANCORA DECISO</textarea></label>
   </section>
 
   <section class="card">
+    <div class="section-head agenda-head">
+      <div>
+        <h2>Scaletta evento</h2>
+        <p class="muted compact">Prepara qui tutte le interazioni. Durante il congresso puoi aprirle direttamente senza riscrivere nulla.</p>
+      </div>
+      <button id="agendaAddBtn" class="agenda-primary">Aggiungi interazione corrente</button>
+    </div>
+    <div id="agendaEditBar" class="agenda-editbar hidden">
+      <span>Voce caricata dalla scaletta</span>
+      <div>
+        <button id="agendaUpdateBtn" class="secondary">Aggiorna voce</button>
+        <button id="agendaCancelBtn" class="secondary">Annulla selezione</button>
+      </div>
+    </div>
+    <div id="agenda" class="agenda-list"></div>
+  </section>
+
+  <section class="card">
     <div class="section-head">
       <div><h2>Risultati live</h2><p class="muted compact"><strong id="totalVotes">0</strong> risposte ricevute</p></div>
       <a id="screenLink" class="link-button" href="display.html" target="_blank" rel="noopener">Apri Schermo</a>

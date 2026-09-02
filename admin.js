@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, serverTimestamp, getDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, writeBatch, serverTimestamp, getDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
 const db = getFirestore(initializeApp(firebaseConfig));
@@ -9,9 +9,14 @@ let unsub = null;
 let unsubHistory = null;
 let unsubWords = null;
 let activeCloudRound = null;
+let unsubAgenda = null;
+let agendaItems = [];
+let selectedAgendaId = null;
 const sessionRef = () => doc(db,'sessions',currentSession);
 const roundRef = roundId => doc(db,'sessions',currentSession,'rounds',roundId);
 const roundsRef = () => collection(db,'sessions',currentSession,'rounds');
+const agendaRef = () => collection(db,'sessions',currentSession,'agenda');
+const agendaItemRef = id => doc(db,'sessions',currentSession,'agenda',id);
 const options = () => q('optionsInput').value.split('\n').map(x=>x.trim()).filter(Boolean);
 
 function typeUI() {
@@ -27,6 +32,7 @@ function subscribe() {
   if (unsub) unsub();
   if (unsubHistory) unsubHistory();
   if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
+  if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
 
   unsub = onSnapshot(sessionRef(), async snap => {
     if (!snap.exists()) return render(null,[]);
@@ -39,6 +45,7 @@ function subscribe() {
     if (d.type === 'wordcloud') subscribeWords(d.roundId);
     else {
       if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
+  if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
       render(d,[]);
     }
   });
@@ -47,6 +54,12 @@ function subscribe() {
     const rounds = snap.docs.map(x => ({id:x.id,...x.data()}));
     rounds.sort((a,b) => timeMs(b.openedAt || b.createdAt) - timeMs(a.openedAt || a.createdAt));
     renderHistory(rounds);
+  });
+
+  unsubAgenda = onSnapshot(agendaRef(), snap => {
+    agendaItems = snap.docs.map(x => ({id:x.id,...x.data()}));
+    agendaItems.sort((a,b) => (Number(a.order)||0) - (Number(b.order)||0) || timeMs(a.createdAt)-timeMs(b.createdAt));
+    renderAgenda();
   });
 
   updateUrls();
@@ -172,6 +185,125 @@ q('resetBtn').onclick = async () => {
   });
 };
 
+
+function currentInteractionPayload() {
+  const type = q('typeInput').value;
+  return {
+    question:q('questionInput').value.trim(),
+    type,
+    options:type === 'choice' ? options() : []
+  };
+}
+
+function validateInteraction(data) {
+  if (!data.question) { alert('Inserisci prima la domanda.'); return false; }
+  if (data.type === 'choice' && data.options.length < 2) { alert('Inserisci almeno due opzioni di risposta.'); return false; }
+  return true;
+}
+
+q('agendaAddBtn').onclick = async () => {
+  const data = currentInteractionPayload();
+  if (!validateInteraction(data)) return;
+  const id = crypto.randomUUID();
+  const maxOrder = agendaItems.reduce((m,x)=>Math.max(m,Number(x.order)||0),0);
+  await setDoc(agendaItemRef(id),{
+    ...data,
+    order:maxOrder + 10,
+    createdAt:serverTimestamp(),
+    updatedAt:serverTimestamp()
+  });
+};
+
+q('agendaUpdateBtn').onclick = async () => {
+  if (!selectedAgendaId) return;
+  const data = currentInteractionPayload();
+  if (!validateInteraction(data)) return;
+  await setDoc(agendaItemRef(selectedAgendaId),{...data,updatedAt:serverTimestamp()},{merge:true});
+  clearAgendaSelection();
+};
+
+q('agendaCancelBtn').onclick = clearAgendaSelection;
+
+function clearAgendaSelection() {
+  selectedAgendaId = null;
+  q('agendaEditBar').classList.add('hidden');
+  renderAgenda();
+}
+
+function loadAgendaItem(item, markSelected=true) {
+  q('questionInput').value = item.question || '';
+  q('typeInput').value = item.type || 'choice';
+  q('optionsInput').value = (item.options || []).join('\n');
+  typeUI();
+  if (markSelected) {
+    selectedAgendaId = item.id;
+    q('agendaEditBar').classList.remove('hidden');
+  }
+  renderAgenda();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function openAgendaItem(item) {
+  loadAgendaItem(item,false);
+  selectedAgendaId = null;
+  q('agendaEditBar').classList.add('hidden');
+  await openRound();
+}
+
+async function moveAgenda(index, direction) {
+  const otherIndex = index + direction;
+  if (otherIndex < 0 || otherIndex >= agendaItems.length) return;
+  const a = agendaItems[index], b = agendaItems[otherIndex];
+  const ao = Number(a.order)||((index+1)*10);
+  const bo = Number(b.order)||((otherIndex+1)*10);
+  const batch = writeBatch(db);
+  batch.update(agendaItemRef(a.id),{order:bo,updatedAt:serverTimestamp()});
+  batch.update(agendaItemRef(b.id),{order:ao,updatedAt:serverTimestamp()});
+  await batch.commit();
+}
+
+async function deleteAgendaItem(item) {
+  if (!confirm(`Eliminare dalla scaletta “${item.question || 'Senza titolo'}”?`)) return;
+  await deleteDoc(agendaItemRef(item.id));
+  if (selectedAgendaId === item.id) clearAgendaSelection();
+}
+
+function renderAgenda() {
+  const el = q('agenda');
+  if (!el) return;
+  if (!agendaItems.length) {
+    el.innerHTML = '<p class="muted agenda-empty">La scaletta è vuota. Imposta una domanda sopra e premi “Aggiungi interazione corrente”.</p>';
+    return;
+  }
+  el.innerHTML = agendaItems.map((item,i) => `
+    <article class="agenda-item${selectedAgendaId===item.id?' selected':''}" data-id="${esc(item.id)}">
+      <div class="agenda-num">${i+1}</div>
+      <div class="agenda-main">
+        <div class="agenda-type">${item.type==='wordcloud'?'WORD CLOUD':'VOTAZIONE'}</div>
+        <strong>${esc(item.question || 'Senza titolo')}</strong>
+        ${item.type==='choice' ? `<div class="agenda-options">${(item.options||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>` : ''}
+      </div>
+      <div class="agenda-actions">
+        <button class="agenda-open" data-action="open">Apri</button>
+        <button class="secondary agenda-small" data-action="load">Modifica</button>
+        <div class="agenda-order">
+          <button class="secondary agenda-icon" data-action="up" aria-label="Sposta su" ${i===0?'disabled':''}>↑</button>
+          <button class="secondary agenda-icon" data-action="down" aria-label="Sposta giù" ${i===agendaItems.length-1?'disabled':''}>↓</button>
+          <button class="danger agenda-icon" data-action="delete" aria-label="Elimina">×</button>
+        </div>
+      </div>
+    </article>`).join('');
+
+  el.querySelectorAll('.agenda-item').forEach((node,index) => {
+    const item = agendaItems[index];
+    node.querySelector('[data-action="open"]').onclick = () => openAgendaItem(item);
+    node.querySelector('[data-action="load"]').onclick = () => loadAgendaItem(item,true);
+    node.querySelector('[data-action="up"]').onclick = () => moveAgenda(index,-1);
+    node.querySelector('[data-action="down"]').onclick = () => moveAgenda(index,1);
+    node.querySelector('[data-action="delete"]').onclick = () => deleteAgendaItem(item);
+  });
+}
+
 async function getRoundWords(roundId) {
   if (!roundId) return [];
   const snap = await getDocs(query(collection(db,'responses'),where('sessionId','==',currentSession),where('roundId','==',roundId)));
@@ -181,6 +313,7 @@ async function getRoundWords(roundId) {
 function subscribeWords(roundId) {
   if (!roundId) {
     if (unsubWords) { unsubWords(); unsubWords = null; activeCloudRound = null; }
+  if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
     render({type:'wordcloud'},[]);
     return;
   }
