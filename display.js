@@ -176,7 +176,7 @@ function renderCloud(arr) {
     return {el, x, i};
   });
 
-  const overlaps = (a,b,pad=8) => !(
+  const overlaps = (a,b,pad=5) => !(
     a.r + pad < b.l || a.l - pad > b.r || a.b + pad < b.t || a.t - pad > b.b
   );
 
@@ -202,14 +202,14 @@ function renderCloud(arr) {
       best = {l:cx-ew/2, t:cy-eh/2, r:cx+ew/2, b:cy+eh/2};
     } else {
       const startAngle = preferredAngles[(i-1) % preferredAngles.length] + Math.floor((i-1)/preferredAngles.length)*0.21;
-      const baseRadius = Math.max(46, Math.min(W,H) * (0.12 + Math.min(i,10)*0.018));
+      const baseRadius = Math.max(40, Math.min(W,H) * (0.105 + Math.min(i,10)*0.016));
 
       for (let ring=0; ring<18 && !best; ring++) {
-        const radius = baseRadius + ring * Math.min(W,H) * 0.035;
+        const radius = baseRadius + ring * Math.min(W,H) * 0.030;
         for (let aTry=0; aTry<24; aTry++) {
           const angle = startAngle + (aTry===0 ? 0 : Math.ceil(aTry/2) * (aTry%2 ? 1 : -1) * 0.16);
           const x = cx + Math.cos(angle)*radius - ew/2;
-          const y = cy + Math.sin(angle)*radius*0.82 - eh/2;
+          const y = cy + Math.sin(angle)*radius*0.88 - eh/2;
           const box = {l:x,t:y,r:x+ew,b:y+eh};
           if (box.l < 8 || box.t < 8 || box.r > W-8 || box.b > H-8) continue;
           if (placed.every(p => !overlaps(box,p))) { best=box; break; }
@@ -232,7 +232,7 @@ function renderCloud(arr) {
           const y = cy + Math.sin(angle)*radius*.82 - eh/2;
           const box = {l:x,t:y,r:x+ew,b:y+eh};
           if (box.l < 8 || box.t < 8 || box.r > W-8 || box.b > H-8) continue;
-          if (placed.every(p => !overlaps(box,p,5))) { best=box; break; }
+          if (placed.every(p => !overlaps(box,p,3))) { best=box; break; }
         }
       }
     }

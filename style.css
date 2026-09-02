@@ -538,3 +538,6 @@ body.display-body{
   white-space:nowrap;
   text-shadow:0 1px 0 rgba(255,255,255,.55);
 }
+
+/* v7.4 - Word Cloud leggermente più compatta */
+.display-cloud-word{padding:.04em .08em}
