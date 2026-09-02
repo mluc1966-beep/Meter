@@ -116,9 +116,98 @@ function subscribeCloud(roundId) {
     const maxCount = Math.max(1,...arr.map(x=>x.count));
     const participants = snap.size;
     message.innerHTML = `<strong class="voter-total">${participants}</strong> ${participants===1?'partecipante':'partecipanti'} · <strong>${wordTotal}</strong> ${wordTotal===1?'parola':'parole'}`;
-    results.innerHTML = arr.length
-      ? `<div class="display-cloud">${arr.map((x,i)=>`<span class="display-cloud-word rank-${Math.min(i,7)}" style="--weight:${(x.count/maxCount).toFixed(3)}" title="${x.count}">${esc(x.label)}</span>`).join('')}</div>`
-      : '<div class="cloud-empty">In attesa delle prime parole…</div>';
+    if (!arr.length) {
+      results.innerHTML = '<div class="cloud-empty">In attesa delle prime parole…</div>';
+      return;
+    }
+    renderCloud(arr, maxCount);
+  });
+}
+
+
+function renderCloud(arr, maxCount) {
+  results.innerHTML = '<div class="display-cloud" id="displayCloud"></div>';
+  const cloud = document.getElementById('displayCloud');
+  const bounds = cloud.getBoundingClientRect();
+  const W = Math.max(300, bounds.width);
+  const H = Math.max(220, bounds.height);
+  const cx = W / 2;
+  const cy = H / 2;
+  const placed = [];
+
+  const items = arr.slice(0, 70).map((x, i) => {
+    const weight = x.count / maxCount;
+    const el = document.createElement('span');
+    el.className = `display-cloud-word rank-${Math.min(i,7)}`;
+    el.textContent = x.label;
+    el.title = `${x.count}`;
+    const minPx = Math.max(18, Math.min(W,H) * 0.032);
+    const maxPx = Math.max(58, Math.min(W,H) * 0.15);
+    const fontPx = minPx + (maxPx - minPx) * Math.pow(weight, .72);
+    el.style.fontSize = `${fontPx}px`;
+    el.style.position = 'absolute';
+    el.style.visibility = 'hidden';
+    el.style.left = '0px';
+    el.style.top = '0px';
+    cloud.appendChild(el);
+    return {el, x, i};
+  });
+
+  const overlaps = (a,b,pad=5) => !(
+    a.r + pad < b.l || a.l - pad > b.r || a.b + pad < b.t || a.t - pad > b.b
+  );
+
+  items.forEach(({el,i}) => {
+    const ew = el.offsetWidth;
+    const eh = el.offsetHeight;
+    let best = null;
+    const angleOffset = (i % 9) * .37;
+    const maxSteps = 1400;
+
+    for (let step=0; step<maxSteps; step++) {
+      let x, y;
+      if (i === 0) {
+        x = cx - ew/2;
+        y = cy - eh/2;
+      } else {
+        const angle = angleOffset + step * .31;
+        const radius = 2.5 * Math.sqrt(step) * Math.min(W,H) / 42;
+        x = cx + Math.cos(angle) * radius - ew/2;
+        y = cy + Math.sin(angle) * radius * .68 - eh/2;
+      }
+      const box = {l:x, t:y, r:x+ew, b:y+eh};
+      if (box.l < 4 || box.t < 4 || box.r > W-4 || box.b > H-4) continue;
+      if (placed.every(p => !overlaps(box,p))) { best = box; break; }
+    }
+
+    if (!best) {
+      // fallback: riduce gradualmente finché trova posto
+      let size = parseFloat(el.style.fontSize);
+      for (let shrink=0; shrink<6 && !best; shrink++) {
+        size *= .86;
+        el.style.fontSize = `${Math.max(14,size)}px`;
+        const w = el.offsetWidth, h = el.offsetHeight;
+        for (let step=0; step<1000; step++) {
+          const angle = angleOffset + step * .34;
+          const radius = 2.8 * Math.sqrt(step) * Math.min(W,H) / 42;
+          const x = cx + Math.cos(angle) * radius - w/2;
+          const y = cy + Math.sin(angle) * radius * .68 - h/2;
+          const box = {l:x,t:y,r:x+w,b:y+h};
+          if (box.l < 4 || box.t < 4 || box.r > W-4 || box.b > H-4) continue;
+          if (placed.every(p => !overlaps(box,p,3))) { best=box; break; }
+        }
+      }
+    }
+
+    if (best) {
+      el.style.left = `${best.l}px`;
+      el.style.top = `${best.t}px`;
+      el.style.visibility = 'visible';
+      el.style.animationDelay = `${Math.min(i*22,350)}ms`;
+      placed.push(best);
+    } else {
+      el.remove();
+    }
   });
 }
 
