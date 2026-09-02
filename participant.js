@@ -65,6 +65,10 @@ async function vote(i,r) {
       const c = [...(d.counts || [])];
       c[i] = (c[i] || 0) + 1;
       tx.update(ref,{counts:c,updatedAt:serverTimestamp()});
+
+      // Aggiorna anche lo storico della tornata in tempo reale.
+      const rr = doc(db,'sessions',sessionId,'rounds',r);
+      tx.set(rr,{counts:c,total:c.reduce((a,b)=>a+b,0),updatedAt:serverTimestamp()},{merge:true});
     });
     done(r);
   } catch(e) {

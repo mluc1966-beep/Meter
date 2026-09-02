@@ -268,3 +268,27 @@ body:has(.participant-app) .participant-app .interaction.choice-list{
     max-height:100vh !important;
   }
 }
+
+/* === Storico votazioni Regia === */
+.history-list{display:grid;gap:12px;margin-top:18px}
+.history-item{border:1px solid #e1e5ea;border-radius:16px;background:#fafbfc;overflow:hidden}
+.history-item summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.history-item summary::-webkit-details-marker{display:none}
+.history-item summary>span:first-child{display:flex;align-items:center;gap:10px;min-width:0}
+.history-item summary strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-summary{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.history-badge{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;background:#e8ebef;color:#4b5563;font-size:.7rem;font-weight:900;letter-spacing:.05em;white-space:nowrap}
+.history-badge.live{background:#e7f6ee;color:#137a47}
+.history-detail{padding:0 18px 18px;border-top:1px solid #eceff2}
+.history-meta{font-size:.82rem;color:var(--muted);margin:13px 0}
+.history-result{display:flex;justify-content:space-between;gap:18px;padding:9px 0;border-bottom:1px solid #edf0f2}
+.history-result:last-child{border-bottom:0}
+.history-result strong{white-space:nowrap}
+.history-cloud{display:flex;flex-wrap:wrap;gap:8px}
+.history-cloud span{background:#eef2f6;border-radius:999px;padding:7px 10px}
+.history-cloud b{margin-left:4px}
+@media(max-width:650px){
+  .history-item summary{align-items:flex-start;flex-direction:column;gap:8px}
+  .history-summary{white-space:normal}
+  .history-item summary>span:first-child{width:100%}
+}
