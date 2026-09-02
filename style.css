@@ -509,3 +509,26 @@ body.display-body{
   animation:cloudIn .32s ease both;
 }
 .cloud-mode .display-cloud-word.rank-0{font-weight:950;z-index:10;}
+
+/* === Word Cloud v7.2: nuvola compatta attorno al centro === */
+.cloud-mode .display-results{
+  display:block;
+  position:relative;
+  width:min(1600px,97%);
+  height:100%;
+  flex:1 1 auto;
+  min-height:0;
+  margin:0 auto;
+}
+.cloud-mode .display-cloud{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+}
+.cloud-mode .display-cloud-word{
+  white-space:nowrap;
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
+}

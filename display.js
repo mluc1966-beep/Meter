@@ -92,6 +92,20 @@ function wordsFromDoc(data) {
   return one ? [one] : [];
 }
 
+// Raggruppa anche varianti come "Curiosità", "curiosita" e spazi/punteggiatura finali.
+function canonicalWord(raw) {
+  const label = String(raw || '')
+    .normalize('NFC')
+    .replace(/^[\s"'“”‘’.,;:!?()\[\]{}]+|[\s"'“”‘’.,;:!?()\[\]{}]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const key = label
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('it');
+  return { label, key };
+}
+
 function subscribeCloud(roundId) {
   if (!roundId) return;
   if (cloudRound === roundId && unsubCloud) return;
@@ -104,46 +118,55 @@ function subscribeCloud(roundId) {
     let wordTotal = 0;
     snap.docs.forEach(x => {
       wordsFromDoc(x.data()).forEach(raw => {
-        raw = raw.replace(/\s+/g,' ');
-        const key = raw.toLocaleLowerCase('it');
+        const {label,key} = canonicalWord(raw);
         if (!key) return;
         wordTotal++;
-        if (!freq[key]) freq[key] = {label:raw,count:0};
+        if (!freq[key]) freq[key] = {label,count:0};
+        // Preferisce la grafia accentata se compare almeno una volta.
+        if (/[^\x00-\x7F]/.test(label)) freq[key].label = label;
         freq[key].count++;
       });
     });
     const arr = Object.values(freq).sort((a,b)=>b.count-a.count || a.label.localeCompare(b.label,'it'));
-    const maxCount = Math.max(1,...arr.map(x=>x.count));
     const participants = snap.size;
     message.innerHTML = `<strong class="voter-total">${participants}</strong> ${participants===1?'partecipante':'partecipanti'} · <strong>${wordTotal}</strong> ${wordTotal===1?'parola':'parole'}`;
     if (!arr.length) {
       results.innerHTML = '<div class="cloud-empty">In attesa delle prime parole…</div>';
       return;
     }
-    renderCloud(arr, maxCount);
+    renderCloud(arr);
   });
 }
 
-
-function renderCloud(arr, maxCount) {
+function renderCloud(arr) {
   results.innerHTML = '<div class="display-cloud" id="displayCloud"></div>';
   const cloud = document.getElementById('displayCloud');
   const bounds = cloud.getBoundingClientRect();
-  const W = Math.max(300, bounds.width);
-  const H = Math.max(220, bounds.height);
+  const W = Math.max(320, bounds.width);
+  const H = Math.max(260, bounds.height);
   const cx = W / 2;
   const cy = H / 2;
   const placed = [];
+  const counts = arr.map(x => x.count);
+  const maxCount = Math.max(...counts);
+  const minCount = Math.min(...counts);
 
-  const items = arr.slice(0, 70).map((x, i) => {
-    const weight = x.count / maxCount;
+  const items = arr.slice(0, 80).map((x, i) => {
+    // Contrasto molto più netto: la parola più citata domina davvero la nuvola.
+    let score;
+    if (maxCount === minCount) score = 0.58;
+    else score = (x.count - minCount) / (maxCount - minCount);
+    score = Math.pow(score, .68);
+
     const el = document.createElement('span');
     el.className = `display-cloud-word rank-${Math.min(i,7)}`;
     el.textContent = x.label;
     el.title = `${x.count}`;
-    const minPx = Math.max(18, Math.min(W,H) * 0.032);
-    const maxPx = Math.max(58, Math.min(W,H) * 0.15);
-    const fontPx = minPx + (maxPx - minPx) * Math.pow(weight, .72);
+
+    const base = Math.min(W, H);
+    const minPx = Math.max(20, base * 0.038);
+    const maxPx = Math.max(82, Math.min(150, base * 0.23));
+    const fontPx = minPx + (maxPx - minPx) * score;
     el.style.fontSize = `${fontPx}px`;
     el.style.position = 'absolute';
     el.style.visibility = 'hidden';
@@ -153,48 +176,63 @@ function renderCloud(arr, maxCount) {
     return {el, x, i};
   });
 
-  const overlaps = (a,b,pad=5) => !(
+  const overlaps = (a,b,pad=8) => !(
     a.r + pad < b.l || a.l - pad > b.r || a.b + pad < b.t || a.t - pad > b.b
   );
 
-  items.forEach(({el,i}) => {
-    const ew = el.offsetWidth;
-    const eh = el.offsetHeight;
-    let best = null;
-    const angleOffset = (i % 9) * .37;
-    const maxSteps = 1400;
+  // Direzioni iniziali distribuite tutt'attorno al centro, così con poche parole
+  // non si forma mai una semplice riga orizzontale.
+  const preferredAngles = [
+    0,
+    -Math.PI/3,
+    2*Math.PI/3,
+    Math.PI/3,
+    -2*Math.PI/3,
+    Math.PI,
+    -Math.PI/2,
+    Math.PI/2
+  ];
 
-    for (let step=0; step<maxSteps; step++) {
-      let x, y;
-      if (i === 0) {
-        x = cx - ew/2;
-        y = cy - eh/2;
-      } else {
-        const angle = angleOffset + step * .31;
-        const radius = 2.5 * Math.sqrt(step) * Math.min(W,H) / 42;
-        x = cx + Math.cos(angle) * radius - ew/2;
-        y = cy + Math.sin(angle) * radius * .68 - eh/2;
+  items.forEach(({el,i}) => {
+    let ew = el.offsetWidth;
+    let eh = el.offsetHeight;
+    let best = null;
+
+    if (i === 0) {
+      best = {l:cx-ew/2, t:cy-eh/2, r:cx+ew/2, b:cy+eh/2};
+    } else {
+      const startAngle = preferredAngles[(i-1) % preferredAngles.length] + Math.floor((i-1)/preferredAngles.length)*0.21;
+      const baseRadius = Math.max(46, Math.min(W,H) * (0.12 + Math.min(i,10)*0.018));
+
+      for (let ring=0; ring<18 && !best; ring++) {
+        const radius = baseRadius + ring * Math.min(W,H) * 0.035;
+        for (let aTry=0; aTry<24; aTry++) {
+          const angle = startAngle + (aTry===0 ? 0 : Math.ceil(aTry/2) * (aTry%2 ? 1 : -1) * 0.16);
+          const x = cx + Math.cos(angle)*radius - ew/2;
+          const y = cy + Math.sin(angle)*radius*0.82 - eh/2;
+          const box = {l:x,t:y,r:x+ew,b:y+eh};
+          if (box.l < 8 || box.t < 8 || box.r > W-8 || box.b > H-8) continue;
+          if (placed.every(p => !overlaps(box,p))) { best=box; break; }
+        }
       }
-      const box = {l:x, t:y, r:x+ew, b:y+eh};
-      if (box.l < 4 || box.t < 4 || box.r > W-4 || box.b > H-4) continue;
-      if (placed.every(p => !overlaps(box,p))) { best = box; break; }
     }
 
+    // Se manca spazio, riduce soltanto le parole periferiche.
     if (!best) {
-      // fallback: riduce gradualmente finché trova posto
       let size = parseFloat(el.style.fontSize);
-      for (let shrink=0; shrink<6 && !best; shrink++) {
+      for (let shrink=0; shrink<8 && !best; shrink++) {
         size *= .86;
-        el.style.fontSize = `${Math.max(14,size)}px`;
-        const w = el.offsetWidth, h = el.offsetHeight;
-        for (let step=0; step<1000; step++) {
-          const angle = angleOffset + step * .34;
-          const radius = 2.8 * Math.sqrt(step) * Math.min(W,H) / 42;
-          const x = cx + Math.cos(angle) * radius - w/2;
-          const y = cy + Math.sin(angle) * radius * .68 - h/2;
-          const box = {l:x,t:y,r:x+w,b:y+h};
-          if (box.l < 4 || box.t < 4 || box.r > W-4 || box.b > H-4) continue;
-          if (placed.every(p => !overlaps(box,p,3))) { best=box; break; }
+        el.style.fontSize = `${Math.max(16,size)}px`;
+        ew = el.offsetWidth; eh = el.offsetHeight;
+        const startAngle = preferredAngles[(i-1) % preferredAngles.length];
+        for (let step=0; step<900; step++) {
+          const angle = startAngle + step * .29;
+          const radius = 14 + 3.3*Math.sqrt(step)*Math.min(W,H)/36;
+          const x = cx + Math.cos(angle)*radius - ew/2;
+          const y = cy + Math.sin(angle)*radius*.82 - eh/2;
+          const box = {l:x,t:y,r:x+ew,b:y+eh};
+          if (box.l < 8 || box.t < 8 || box.r > W-8 || box.b > H-8) continue;
+          if (placed.every(p => !overlaps(box,p,5))) { best=box; break; }
         }
       }
     }
@@ -203,7 +241,7 @@ function renderCloud(arr, maxCount) {
       el.style.left = `${best.l}px`;
       el.style.top = `${best.t}px`;
       el.style.visibility = 'visible';
-      el.style.animationDelay = `${Math.min(i*22,350)}ms`;
+      el.style.animationDelay = `${Math.min(i*24,360)}ms`;
       placed.push(best);
     } else {
       el.remove();
