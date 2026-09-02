@@ -224,3 +224,47 @@ body{background:#fff;background-attachment:fixed}
   .participant-app .interaction.choice-list{gap:4px !important}
   .participant-app .interaction.choice-list .choice{font-size:.72rem !important;border-radius:10px !important;padding:4px 8px !important}
 }
+
+/* === FIX DEFINITIVO NO-SCROLL PARTECIPANTE === */
+html:has(.participant-app),
+body:has(.participant-app){
+  width:100%;
+  height:100%;
+  margin:0;
+  padding:0;
+  overflow:hidden !important;
+  overscroll-behavior:none;
+  background:#fff;
+}
+
+body:has(.participant-app) .participant-app{
+  height:100dvh !important;
+  min-height:100dvh !important;
+  max-height:100dvh !important;
+  margin:0 auto !important;
+  overflow:hidden !important;
+}
+
+body:has(.participant-app) .participant-app .hero{
+  height:100% !important;
+  min-height:0 !important;
+  max-height:100% !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+
+/* Usa lo spazio disponibile, senza aggiungere altezza oltre il viewport */
+body:has(.participant-app) .participant-app .interaction.choice-list{
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+
+/* Fallback Safari/iOS meno recenti */
+@supports not (height:100dvh){
+  html, body:has(.participant-app){height:100%;overflow:hidden !important}
+  body:has(.participant-app) .participant-app{
+    height:100vh !important;
+    min-height:100vh !important;
+    max-height:100vh !important;
+  }
+}
