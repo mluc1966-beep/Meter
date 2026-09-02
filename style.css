@@ -332,3 +332,153 @@ body:has(.participant-app) .participant-app .interaction.choice-list{
 .agenda-status{margin:12px 0 4px;padding:10px 12px;border-radius:10px;background:#eef7f2;font-weight:700;color:#285b43}
 .agenda-status.error{background:#fff0f0;color:#9b2634}
 .agenda-status.hidden{display:none}
+
+/* === METER v7: attesa partecipante, Word Cloud x3, schermo 16:9 senza scroll === */
+.participant-app #question.hidden + #status{
+  margin-top:auto;
+}
+.participant-app #question.hidden ~ #status{
+  font-size:clamp(1.05rem,2.7dvh,1.35rem);
+  font-weight:700;
+  color:var(--muted);
+  margin:auto 0;
+}
+.participant-app .word-entry-three{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:clamp(7px,1.2dvh,12px) !important;
+  width:min(100%,520px);
+  margin:clamp(6px,1.2dvh,12px) auto 0 !important;
+}
+.participant-app .word-entry-three .word-input{
+  min-height:0;
+  padding:clamp(9px,1.5dvh,13px) 14px !important;
+  font-size:clamp(.9rem,2.1dvh,1.05rem) !important;
+}
+.participant-app .word-entry-three button{
+  min-height:44px;
+  padding:clamp(8px,1.3dvh,12px) 18px;
+}
+.participant-app .word-entry-three .word-hint{
+  font-size:clamp(.67rem,1.55dvh,.8rem);
+}
+
+html:has(.display-body),
+body.display-body{
+  width:100%;
+  height:100%;
+  margin:0;
+  overflow:hidden !important;
+}
+.display-body{
+  min-height:100dvh;
+  height:100dvh;
+  background:#111820;
+}
+.display-stage{
+  width:100vw;
+  height:100dvh;
+  min-height:0;
+  padding:1.4dvh 1.4vw;
+  overflow:hidden;
+}
+.display-panel{
+  width:100%;
+  height:100%;
+  min-height:0;
+  padding:1.5dvh 2.4vw 2dvh;
+  border-radius:clamp(18px,2vw,30px);
+  justify-content:flex-start;
+  overflow:hidden;
+}
+.display-logo{
+  width:100%;
+  height:clamp(78px,15dvh,150px);
+  flex:0 0 auto;
+  background:#fff url('header-processo-ai.png') center/contain no-repeat;
+  border-radius:16px;
+  margin:0 auto clamp(5px,.8dvh,10px);
+}
+#displayState{
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.display-question{
+  flex:0 0 auto;
+  font-size:clamp(1.8rem,3.6vw,4.3rem);
+  line-height:1.02;
+  max-width:1500px;
+  margin:.5dvh auto .5dvh;
+}
+.display-message{
+  flex:0 0 auto;
+  font-size:clamp(1rem,1.55vw,1.75rem);
+  margin:0 auto 1.2dvh;
+}
+.display-results{
+  flex:1 1 auto;
+  min-height:0;
+  width:min(1500px,96%);
+  display:grid;
+  gap:clamp(6px,1dvh,12px);
+  align-content:stretch;
+  overflow:hidden;
+}
+.show-results .display-question{
+  font-size:clamp(1.55rem,2.7vw,3.25rem);
+}
+.show-results .display-results{
+  grid-auto-rows:minmax(0,1fr);
+}
+.show-results .verdict-row{
+  min-height:0;
+  padding:clamp(6px,.9dvh,11px) clamp(12px,1.5vw,22px);
+  border-radius:clamp(12px,1.4vw,20px);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.show-results .verdict-top{
+  margin-bottom:clamp(4px,.55dvh,8px);
+}
+.show-results .verdict-label{
+  font-size:clamp(1rem,1.55vw,1.9rem);
+  line-height:1.05;
+}
+.show-results .verdict-number strong{
+  font-size:clamp(1.55rem,2.6vw,3.1rem);
+}
+.show-results .verdict-number span{
+  font-size:clamp(.78rem,1vw,1.15rem);
+}
+.show-results .verdict-bar{
+  height:clamp(10px,1.45dvh,20px);
+}
+.cloud-mode .display-question{
+  font-size:clamp(1.5rem,2.5vw,3rem);
+}
+.cloud-mode .display-results{
+  align-content:center;
+}
+.cloud-mode .display-cloud{
+  min-height:0;
+  height:100%;
+  max-height:100%;
+  padding:.5dvh 1vw;
+  gap:clamp(5px,1vh,12px) clamp(8px,1.2vw,18px);
+  align-content:center;
+  overflow:hidden;
+}
+.cloud-mode .display-cloud-word{
+  font-size:calc(clamp(1rem,1.5vw,1.8rem) + (clamp(1.4rem,3vw,4rem) * var(--weight)));
+}
+.holding #displayState{
+  justify-content:center;
+}
+.holding .display-question{
+  font-size:clamp(2.2rem,4.4vw,5.3rem);
+}

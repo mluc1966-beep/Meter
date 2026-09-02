@@ -333,7 +333,7 @@ function renderAgenda() {
 async function getRoundWords(roundId) {
   if (!roundId) return [];
   const snap = await getDocs(query(collection(db,'responses'),where('sessionId','==',currentSession),where('roundId','==',roundId)));
-  return snap.docs.map(x=>x.data().text||'').filter(Boolean);
+  return snap.docs.flatMap(x=>wordsFromResponse(x.data()));
 }
 
 function subscribeWords(roundId) {
@@ -347,9 +347,15 @@ function subscribeWords(roundId) {
   activeCloudRound = roundId;
   const qq = query(collection(db,'responses'),where('sessionId','==',currentSession),where('roundId','==',roundId));
   unsubWords = onSnapshot(qq, snap => {
-    const words = snap.docs.map(x=>x.data().text||'').filter(Boolean);
+    const words = snap.docs.flatMap(x=>wordsFromResponse(x.data()));
     render({type:'wordcloud'},words);
   });
+}
+
+function wordsFromResponse(data) {
+  if (Array.isArray(data?.texts)) return data.texts.map(x=>String(x||'').trim()).filter(Boolean);
+  const one = String(data?.text || '').trim();
+  return one ? [one] : [];
 }
 
 function wordFrequencies(words) {

@@ -1,25 +1,38 @@
-# Processo all'AI — voto live + Word Cloud (v3)
+# METER – v4 storico votazioni
 
-Web-app per GitHub Pages + Firebase Firestore.
+Questa versione aggiunge uno storico persistente delle tornate in Firestore.
 
-## Novità v3
-- Risposte partecipante impilate verticalmente, larghe e ben distanziate.
-- Nuova pagina `display.html` dedicata a maxischermo/proiettore.
-- Responso con percentuali grandi, numero voti, barre animate ed evidenza del risultato più votato.
-- Dalla Regia: pulsante **Apri Schermo** e checkbox **Rivela il responso sullo schermo**.
-- Il link partecipante e il link schermo mantengono lo stesso codice sessione.
+## Novità
+- Ogni clic su **Apri** crea una nuova tornata con `roundId` univoco.
+- La tornata viene salvata in `sessions/{sessionId}/rounds/{roundId}`.
+- Per i voti a scelta, conteggi e totale vengono aggiornati anche nello storico in tempo reale.
+- Con **Chiudi** vengono congelati stato, risultati e data/ora.
+- Per Word Cloud, alla chiusura vengono salvate anche frequenze delle parole e numero contributi.
+- La Regia mostra la sezione **Storico votazioni** con risultati e timestamp.
+- **Azzera risposte** non cancella più le tornate precedenti: archivia quella corrente come "AZZERATA" e avvia una nuova tornata vuota.
 
-## Pagine
-- `index.html`: partecipanti
-- `admin.html`: regia
-- `display.html`: schermo/proiettore
+## File da aggiornare su GitHub
+- `admin.html`
+- `admin.js`
+- `participant.js`
+- `style.css`
 
-## Uso rapido
-1. Apri Regia.
-2. Configura domanda e opzioni.
-3. Premi **Apri**.
-4. Apri **Schermo** sul PC collegato al proiettore.
-5. Durante la votazione lo schermo mostra “Votazione in corso”.
-6. Quando vuoi rivelare il risultato, attiva **Rivela il responso sullo schermo**.
+Gli altri file possono restare invariati.
 
-La configurazione Firebase del progetto METER è già inclusa in `firebase-config.js`.
+
+## Word Cloud v5
+- Aggiornamento live in Regia e sullo Schermo tramite listener Firestore.
+- Una risposta per dispositivo per tornata.
+- Parole uguali accorpate senza distinzione maiuscole/minuscole.
+- Dimensione proporzionale alla frequenza.
+- Enter invia la parola dal telefono.
+- Storico conserva frequenze e totale contributi.
+
+## v6 — Scaletta evento
+La Regia contiene ora una Scaletta persistente in Firebase. Puoi aggiungere l'interazione corrente, riordinare le voci, caricarle per modificarle e aprirle direttamente durante l'evento. La scaletta è salvata nella sottoraccolta `sessions/{sessionId}/agenda`.
+
+
+## v6.1 — Correzione Scaletta
+- Corretto un bug che interrompeva il listener Firebase della scaletta in alcune condizioni.
+- Aggiunto feedback visibile di salvataggio/errore.
+- Cache busting su `admin.js` e `style.css` per evitare che GitHub Pages/browser usino la versione precedente.

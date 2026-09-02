@@ -13,7 +13,7 @@ const key = r => `answered:${sessionId}:${r}`;
 
 onSnapshot(ref, s => {
   if (!s.exists()) {
-    question.textContent = 'Sessione non configurata';
+    showQuestion('Sessione non configurata');
     status.textContent = 'Controlla il link.';
     box.innerHTML = '';
     return;
@@ -21,26 +21,55 @@ onSnapshot(ref, s => {
   render(s.data());
 });
 
+function showQuestion(text) {
+  question.textContent = text || '';
+  question.classList.toggle('hidden', !text);
+}
+
+function waiting() {
+  showQuestion('');
+  box.innerHTML = '';
+  box.className = 'interaction';
+  thanks.classList.add('hidden');
+  status.textContent = 'In attesa della prossima domanda…';
+}
+
 function render(d) {
-  question.textContent = d.question || 'Interazione';
   box.innerHTML = '';
   box.className = 'interaction';
   thanks.classList.add('hidden');
 
   if (!d.isOpen) {
-    status.textContent = 'In attesa della prossima domanda…';
+    waiting();
     return;
   }
+
   if (localStorage.getItem(key(d.roundId))) {
-    status.textContent = 'Hai già risposto.';
-    thanks.classList.remove('hidden');
+    waiting();
     return;
   }
+
+  showQuestion(d.question || 'Interazione');
+
   if (d.type === 'wordcloud') {
-    status.textContent = 'Scrivi una parola o una breve espressione.';
-    box.innerHTML = '<div class="word-entry"><input id="wordInput" maxlength="40" autocomplete="off" autocapitalize="sentences" placeholder="Scrivi qui…"><button id="sendWord">Invia</button><div class="word-hint">Massimo 40 caratteri · una risposta per partecipante</div></div>';
-    document.getElementById('sendWord').onclick = () => sendWord(d.roundId);
-    document.getElementById('wordInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendWord(d.roundId); });
+    status.textContent = 'Scrivi fino a 3 parole o brevi espressioni.';
+    box.innerHTML = `
+      <div class="word-entry word-entry-three">
+        <input class="word-input" maxlength="40" autocomplete="off" autocapitalize="sentences" placeholder="Parola 1">
+        <input class="word-input" maxlength="40" autocomplete="off" autocapitalize="sentences" placeholder="Parola 2 (facoltativa)">
+        <input class="word-input" maxlength="40" autocomplete="off" autocapitalize="sentences" placeholder="Parola 3 (facoltativa)">
+        <button id="sendWord">Invia</button>
+        <div class="word-hint">Fino a 3 parole · massimo 40 caratteri ciascuna · un invio per partecipante</div>
+      </div>`;
+    document.getElementById('sendWord').onclick = () => sendWords(d.roundId);
+    document.querySelectorAll('.word-input').forEach((input,idx,all) => {
+      input.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (idx < all.length - 1 && input.value.trim()) all[idx+1].focus();
+        else sendWords(d.roundId);
+      });
+    });
     return;
   }
 
@@ -66,8 +95,6 @@ async function vote(i,r) {
       const c = [...(d.counts || [])];
       c[i] = (c[i] || 0) + 1;
       tx.update(ref,{counts:c,updatedAt:serverTimestamp()});
-
-      // Aggiorna anche lo storico della tornata in tempo reale.
       const rr = doc(db,'sessions',sessionId,'rounds',r);
       tx.set(rr,{counts:c,total:c.reduce((a,b)=>a+b,0),updatedAt:serverTimestamp()},{merge:true});
     });
@@ -77,17 +104,26 @@ async function vote(i,r) {
   }
 }
 
-async function sendWord(r) {
-  const input = document.getElementById('wordInput');
-  const text = input.value.trim().replace(/\s+/g,' ');
-  if (!text) return;
+async function sendWords(r) {
+  const inputs = [...document.querySelectorAll('.word-input')];
+  const texts = inputs.map(input => input.value.trim().replace(/\s+/g,' ')).filter(Boolean);
+  if (!texts.length) {
+    inputs[0]?.focus();
+    return;
+  }
   document.getElementById('sendWord').disabled = true;
   try {
     const voter = getVoter();
-    await setDoc(doc(collection(db,'responses'),`${sessionId}_${r}_${voter}`),{sessionId,roundId:r,text,createdAt:serverTimestamp()});
+    await setDoc(doc(collection(db,'responses'),`${sessionId}_${r}_${voter}`),{
+      sessionId,
+      roundId:r,
+      texts:texts.slice(0,3),
+      createdAt:serverTimestamp()
+    });
     done(r);
   } catch(e) {
     status.textContent = 'Errore durante l’invio.';
+    document.getElementById('sendWord').disabled = false;
   }
 }
 
@@ -102,7 +138,5 @@ function getVoter() {
 
 function done(r) {
   localStorage.setItem(key(r),'1');
-  box.innerHTML = '';
-  status.textContent = 'Risposta registrata.';
-  thanks.classList.remove('hidden');
+  waiting();
 }
